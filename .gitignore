@@ -13,3 +13,4 @@ yarn-error.log
 .env
 /bulma.docset/
 /storage/bulma-documentation/
+/output/

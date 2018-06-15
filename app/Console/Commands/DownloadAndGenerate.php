@@ -40,18 +40,25 @@ class DownloadAndGenerate extends Command
 	 * @return mixed
 	 */
 	public function handle() {
-
+		File::makeDirectory(base_path() . 'output/');
 		$bulmaDir = storage_path('bulma-documentation/');
 
-//		$this->download($bulmaDir);
+		$this->download($bulmaDir);
 
 		$this->cleanUpFiles($bulmaDir);
+
+		$this->info("Running dashing");
 
 		$command = 'dashing build --source ' . $bulmaDir . ' --config ' . storage_path('dashing.json');
 
 		$process = new Process($command);
 		$process->run();
 		$this->info($process->getOutput());
+
+		File::deleteDirectory(base_path() . 'output/bulma.docset/');
+		File::moveDirectory(base_path() . '/bulma.docset', base_path() . '/output/bulma.docset', TRUE);
+
+		$this->info("Your dash docset is ready at " . base_path() . '/output/bulma.docset');
 	}
 
 	/**
