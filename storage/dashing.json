@@ -1,0 +1,14 @@
+{
+  "name": "Bulma",
+  "package": "bulma",
+  "index": "bulma.io/documentation/index.html",
+  "selectors": {
+    "header.bd-header h1.title": "Component"
+  },
+  "ignore": [
+    "ABOUT"
+  ],
+  "icon32x32": "",
+  "allowJS": true,
+  "ExternalURL": "https://bulma.io/documentation/"
+}
