@@ -2,10 +2,10 @@
 
 namespace App\Console\Commands;
 
-use App\CleanUpPage;
+use App\CreateFromMenu;
+use App\MenuParser;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
-use Symfony\Component\Finder\SplFileInfo;
 use Symfony\Component\Process\Process;
 
 class DownloadAndGenerate extends Command
@@ -40,25 +40,25 @@ class DownloadAndGenerate extends Command
 	 * @return mixed
 	 */
 	public function handle() {
-		File::makeDirectory(base_path() . 'output/');
+		if (File::exists(base_path() . 'output/') == FALSE) {
+			File::makeDirectory(base_path() . 'output/');
+		}
 		$bulmaDir = storage_path('bulma-documentation/');
 
 		$this->download($bulmaDir);
 
-		$this->cleanUpFiles($bulmaDir);
+		$myDocumentationDir = $bulmaDir . 'bulma.io/my-documentation/docs/';
+		if (File::exists($myDocumentationDir) == FALSE) {
+			File::makeDirectory($myDocumentationDir, 0755, TRUE);
+		}
 
-		$this->info("Running dashing");
+		$this->createDocs($bulmaDir);
 
-		$command = 'dashing build --source ' . $bulmaDir . ' --config ' . storage_path('dashing.json');
+		$this->cleanUp($bulmaDir);
 
-		$process = new Process($command);
-		$process->run();
-		$this->info($process->getOutput());
+		$this->runDashing($bulmaDir);
 
-		File::deleteDirectory(base_path() . 'output/bulma.docset/');
-		File::moveDirectory(base_path() . '/bulma.docset', base_path() . '/output/bulma.docset', TRUE);
-
-		$this->info("Your dash docset is ready at " . base_path() . '/output/bulma.docset');
+		$this->saveDocset($bulmaDir);
 	}
 
 	/**
@@ -83,24 +83,47 @@ class DownloadAndGenerate extends Command
 	 *
 	 * @return void
 	 */
-	protected function cleanUpFiles($bulmaDir): void {
-		$this->info("Cleaning up");
+	protected function createDocs($bulmaDir): void {
+		$this->info("Creating docs...");
 
-		$files = File::files($bulmaDir . 'bulma.io/documentation/');
+		$menu = new MenuParser($bulmaDir . 'bulma.io/documentation/index.html');
 
-		collect($files)->each(function(SplFileInfo $file) {
-			if ($file->getFilename() != 'index.html') {
-				File::delete($file->getPathname());
-			}
-		});
+		$createFromMenu = new CreateFromMenu($menu->getMenu(), $bulmaDir . 'bulma.io/my-documentation/docs/');
 
-		$dirs = File::directories($bulmaDir . 'bulma.io/documentation/');
-
-		foreach ($dirs as $dir) {
-			collect(File::files($dir))->each(function(SplFileInfo $file) {
-				$cleaner = new CleanUpPage($file->getPathname());
-				$cleaner->cleanUpAndSave();
-			});
-		}
+		$createFromMenu->create();
 	}
+
+	protected function cleanUp($bulmaDir) {
+		$this->info("Cleaning up");
+		File::deleteDirectory($bulmaDir . 'documentation/');
+	}
+
+	/**
+	 * @param $bulmaDir
+	 *
+	 * @return void
+	 */
+	protected function runDashing($bulmaDir): void {
+		$this->info("Running dashing");
+
+		$command = 'dashing build --config ' . storage_path('dashing.json');
+
+		$process = new Process($command, $bulmaDir);
+		$process->run();
+		$this->info($process->getOutput());
+	}
+
+	/**
+	 * @return void
+	 */
+	protected function saveDocset($bulmaDir): void {
+		File::deleteDirectory(base_path() . 'output/bulma.docset/');
+		File::moveDirectory($bulmaDir . 'bulma.docset', base_path() . '/output/bulma.docset', TRUE);
+
+		File::copy(resource_path() . '/assets/icons/icon.png', base_path() . '/output/bulma.docset/icon.png');
+		File::copy(resource_path() . '/assets/icons/icon@2x.png', base_path() . '/output/bulma.docset/icon@2x.png');
+
+		$this->info("Your dash docset is ready at " . base_path() . '/output/bulma.docset');
+	}
+
 }

@@ -1,9 +1,11 @@
 {
   "name": "Bulma",
   "package": "bulma",
-  "index": "bulma.io/documentation/index.html",
+  "index": "bulma.io/my-documentation/docs/overview.html",
   "selectors": {
-    "header.bd-header h1.title": "Component"
+    "#my-guide #guide-title": "Guide",
+    "#my-guide header.bd-header h1.title": "Component",
+    "#my-guide .bd-anchor-title .bd-anchor-name": "Section"
   },
   "ignore": [
     "ABOUT"
