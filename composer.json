@@ -13,7 +13,7 @@
         "symfony/dom-crawler": "4.1.0"
     },
     "require-dev": {
-        "filp/whoops": "2.5.0",
+        "filp/whoops": "2.15.4",
         "fzaninotto/faker": "1.8.0",
         "mockery/mockery": "1.2.3",
         "nunomaduro/collision": "2.1.1",
